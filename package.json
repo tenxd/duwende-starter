@@ -1,0 +1,15 @@
+{
+  "name": "duwende-starter",
+  "module": "index.js",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "duwende": "latest",
+    "jsonwebtoken": "^9.0.2",
+    "mustache": "^4.2.0",
+    "pg": "^8.13.1"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "global": {
+    "resourcePath": "services/${service}/resources/${name}.js"
+  },
+  "resources": {
+    "user": {
+      "defaultGreeting": "Welcome"
+    }
+  }
+}
