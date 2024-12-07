@@ -39,7 +39,9 @@ describe('SqliteTool', () => {
             });
 
             expect(result.status).toBe(200);
-            expect(result.content).toEqual([{ test: 1 }]);
+            expect(result.content.success).toBe(true);
+            expect(result.content.rows).toEqual([{ test: 1 }]);
+            expect(result.content.affectedRows).toBe(1);
         });
 
         test('should initialize with file database', async () => {
@@ -51,7 +53,9 @@ describe('SqliteTool', () => {
             });
 
             expect(result.status).toBe(200);
-            expect(result.content).toEqual([{ test: 1 }]);
+            expect(result.content.success).toBe(true);
+            expect(result.content.rows).toEqual([{ test: 1 }]);
+            expect(result.content.affectedRows).toBe(1);
             expect(existsSync(testDbPath)).toBe(true);
         });
 
@@ -75,7 +79,9 @@ describe('SqliteTool', () => {
             });
 
             expect(result.status).toBe(200);
-            expect(result.content).toEqual([{ id: 1, name: 'test' }]);
+            expect(result.content.success).toBe(true);
+            expect(result.content.rows).toEqual([{ id: 1, name: 'test' }]);
+            expect(result.content.affectedRows).toBe(1);
         });
 
         test('should handle initialization errors', async () => {
@@ -112,8 +118,9 @@ describe('SqliteTool', () => {
             });
 
             expect(result.status).toBe(200);
-            expect(result.content.affectedRows).toBe(1);
             expect(result.content.success).toBe(true);
+            expect(result.content.affectedRows).toBe(1);
+            expect(result.content.rows).toEqual([]);
         });
 
         test('should execute SELECT operation with parameters', async () => {
@@ -129,11 +136,13 @@ describe('SqliteTool', () => {
             });
 
             expect(result.status).toBe(200);
-            expect(result.content).toEqual([{
+            expect(result.content.success).toBe(true);
+            expect(result.content.rows).toEqual([{
                 id: 1,
                 name: 'John Doe',
                 age: 30
             }]);
+            expect(result.content.affectedRows).toBe(1);
         });
 
         test('should execute UPDATE operation with parameters', async () => {
@@ -149,8 +158,9 @@ describe('SqliteTool', () => {
             });
 
             expect(updateResult.status).toBe(200);
-            expect(updateResult.content.affectedRows).toBe(1);
             expect(updateResult.content.success).toBe(true);
+            expect(updateResult.content.affectedRows).toBe(1);
+            expect(updateResult.content.rows).toEqual([]);
 
             // Verify update
             const selectResult = await sqliteTool.use({
@@ -158,7 +168,7 @@ describe('SqliteTool', () => {
                 values: ['John Doe']
             });
 
-            expect(selectResult.content[0].age).toBe(31);
+            expect(selectResult.content.rows[0].age).toBe(31);
         });
 
         test('should execute DELETE operation with parameters', async () => {
@@ -174,15 +184,17 @@ describe('SqliteTool', () => {
             });
 
             expect(deleteResult.status).toBe(200);
-            expect(deleteResult.content.affectedRows).toBe(1);
             expect(deleteResult.content.success).toBe(true);
+            expect(deleteResult.content.affectedRows).toBe(1);
+            expect(deleteResult.content.rows).toEqual([]);
 
             // Verify deletion
             const selectResult = await sqliteTool.use({
                 query: 'SELECT * FROM users'
             });
 
-            expect(selectResult.content).toEqual([]);
+            expect(selectResult.content.rows).toEqual([]);
+            expect(selectResult.content.affectedRows).toBe(0);
         });
 
         test('should handle large datasets', async () => {
@@ -200,7 +212,9 @@ describe('SqliteTool', () => {
             });
 
             expect(result.status).toBe(200);
-            expect(result.content[0].count).toBe(1000);
+            expect(result.content.success).toBe(true);
+            expect(result.content.rows[0].count).toBe(1000);
+            expect(result.content.affectedRows).toBe(1);
         });
 
         test('should handle complex transactions', async () => {
@@ -229,10 +243,13 @@ describe('SqliteTool', () => {
                 query: 'SELECT balance FROM accounts ORDER BY id'
             });
 
-            expect(balances.content).toEqual([
+            expect(balances.status).toBe(200);
+            expect(balances.content.success).toBe(true);
+            expect(balances.content.rows).toEqual([
                 { balance: 500 },
                 { balance: 2500 }
             ]);
+            expect(balances.content.affectedRows).toBe(2);
         });
 
         test('should handle transaction rollback on error', async () => {
@@ -249,6 +266,7 @@ describe('SqliteTool', () => {
             });
 
             expect(result.status).toBe(400);
+            expect(result.content.success).toBe(false);
             expect(result.content.error).toBeDefined();
 
             // Verify original data is unchanged
@@ -257,7 +275,7 @@ describe('SqliteTool', () => {
                 values: ['John Doe']
             });
 
-            expect(selectResult.content).toEqual([{
+            expect(selectResult.content.rows).toEqual([{
                 id: 1,
                 name: 'John Doe',
                 age: 30
@@ -268,7 +286,7 @@ describe('SqliteTool', () => {
                 query: 'SELECT * FROM users'
             });
 
-            expect(allRecords.content.length).toBe(1);
+            expect(allRecords.content.rows.length).toBe(1);
         });
 
         test('should handle concurrent operations', async () => {
@@ -293,7 +311,7 @@ describe('SqliteTool', () => {
             const count = await sqliteTool.use({
                 query: 'SELECT COUNT(*) as count FROM users'
             });
-            expect(count.content[0].count).toBe(10);
+            expect(count.content.rows[0].count).toBe(10);
         });
     });
 
@@ -309,6 +327,7 @@ describe('SqliteTool', () => {
             });
 
             expect(result.status).toBe(400);
+            expect(result.content.success).toBe(false);
             expect(result.content.error).toBeDefined();
         });
 
@@ -318,6 +337,7 @@ describe('SqliteTool', () => {
             });
 
             expect(result.status).toBe(400);
+            expect(result.content.success).toBe(false);
             expect(result.content.error).toBeDefined();
         });
 
@@ -328,6 +348,7 @@ describe('SqliteTool', () => {
             });
 
             expect(result.status).toBe(400);
+            expect(result.content.success).toBe(false);
             expect(result.content.error).toBeDefined();
         });
 
@@ -353,6 +374,7 @@ describe('SqliteTool', () => {
                 });
 
                 expect(result.status).toBe(400);
+                expect(result.content.success).toBe(false);
                 expect(result.content.error).toBeDefined();
                 expect(result.content.error).toContain('permission');
             } finally {

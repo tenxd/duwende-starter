@@ -16,8 +16,8 @@ describe("PostgreSQLTool", () => {
       password: "duwende",
       database: "duwende-test",
       port: 5432,
-      minconn: 1,
-      maxconn: 10,
+      minConn: 1,
+      maxConn: 10,
       initialization:
         "CREATE TABLE IF NOT EXISTS test_table (id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL);",
     });
@@ -58,7 +58,7 @@ describe("PostgreSQLTool", () => {
       });
 
       expect(insertResult.status).toBe(200);
-      expect(insertResult.content.affected_rows).toBe(1);
+      expect(insertResult.content.affectedRows).toBe(1);
       expect(insertResult.content.rows[0]).toHaveProperty("name", "Test Name");
 
       const selectResult = await pgTool.use({
@@ -82,7 +82,7 @@ describe("PostgreSQLTool", () => {
       });
 
       expect(insertResult.status).toBe(200);
-      expect(insertResult.content.affected_rows).toBe(1000);
+      expect(insertResult.content.affectedRows).toBe(1000);
 
       const countResult = await pgTool.use({
         query: 'SELECT COUNT(*) as count FROM test_table'
@@ -107,7 +107,7 @@ describe("PostgreSQLTool", () => {
       // Verify all operations succeeded
       results.forEach(result => {
         expect(result.status).toBe(200);
-        expect(result.content.affected_rows).toBe(1);
+        expect(result.content.affectedRows).toBe(1);
       });
 
       // Verify final state
@@ -215,12 +215,12 @@ describe("PostgreSQLTool", () => {
       expect(schema.port).toBeDefined();
       expect(schema.port.type).toBe("number");
       expect(schema.port.required).toBe(true);
-      expect(schema.minconn).toBeDefined();
-      expect(schema.minconn.type).toBe("number");
-      expect(schema.minconn.required).toBe(true);
-      expect(schema.maxconn).toBeDefined();
-      expect(schema.maxconn.type).toBe("number");
-      expect(schema.maxconn.required).toBe(true);
+      expect(schema.minConn).toBeDefined();
+      expect(schema.minConn.type).toBe("number");
+      expect(schema.minConn.required).toBe(true);
+      expect(schema.maxConn).toBeDefined();
+      expect(schema.maxConn.type).toBe("number");
+      expect(schema.maxConn.required).toBe(true);
       expect(schema.initialization).toBeDefined();
       expect(schema.initialization.type).toBe("string");
       expect(schema.initialization.required).toBe(false);

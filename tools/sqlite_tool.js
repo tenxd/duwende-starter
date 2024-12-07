@@ -49,7 +49,8 @@ export class SqliteTool extends Tool {
                 return {
                     status: 400,
                     content: {
-                        error: 'Query is required'
+                        error: 'Query is required',
+                        success: false
                     }
                 };
             }
@@ -61,7 +62,8 @@ export class SqliteTool extends Tool {
                     return {
                         status: 400,
                         content: {
-                            error: 'Query parameters are required but not provided'
+                            error: 'Query parameters are required but not provided',
+                            success: false
                         }
                     };
                 }
@@ -74,7 +76,11 @@ export class SqliteTool extends Tool {
                     const rows = values ? stmt.all(values) : stmt.all();
                     return {
                         status: 200,
-                        content: rows
+                        content: {
+                            rows: rows,
+                            affectedRows: rows.length,
+                            success: true
+                        }
                     };
                 } else {
                     // For other queries (INSERT, UPDATE, DELETE)
@@ -86,15 +92,12 @@ export class SqliteTool extends Tool {
                         const changesStmt = this.db.prepare('SELECT changes()');
                         const changes = changesStmt.get()['changes()'];
                         const lastInsertId = this.db.lastInsertRowId;
-
-                        // Log for debugging
-                        console.log('Changes:', changes);
-                        console.log('Last Insert ID:', lastInsertId);
                         
                         return {
                             status: 200,
                             content: {
                                 affectedRows: changes,
+                                rows: [],
                                 success: true,
                                 lastInsertId: lastInsertId
                             }
@@ -104,7 +107,8 @@ export class SqliteTool extends Tool {
                         return {
                             status: 400,
                             content: {
-                                error: error.message
+                                error: error.message,
+                                success: false
                             }
                         };
                     } finally {
@@ -117,7 +121,8 @@ export class SqliteTool extends Tool {
                 return {
                     status: 400,
                     content: {
-                        error: error.message
+                        error: error.message,
+                        success: false
                     }
                 };
             }
@@ -126,7 +131,8 @@ export class SqliteTool extends Tool {
             return {
                 status: 400,
                 content: {
-                    error: error.message
+                    error: error.message,
+                    success: false
                 }
             };
         }
@@ -170,6 +176,7 @@ export class SqliteTool extends Tool {
                 content: {
                     type: 'object',
                     properties: {
+                        rows: { type: 'array' },
                         affectedRows: { type: 'number' },
                         success: { type: 'boolean' },
                         error: { type: 'string' },

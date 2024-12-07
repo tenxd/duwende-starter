@@ -1,5 +1,6 @@
 {
   "name": "duwende-starter",
+  "version": "1.0.1",
   "module": "index.js",
   "type": "module",
   "devDependencies": {

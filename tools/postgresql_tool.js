@@ -3,18 +3,18 @@ import pkg from "pg";
 const { Pool } = pkg;
 
 export class PostgreSQLTool extends Tool {
-  constructor(config) {
-    super(config);
+  constructor(params) {
+    super(params);
     const {
       host,
       user,
       password,
       database,
       port,
-      minconn,
-      maxconn,
+      minConn,
+      maxConn,
       initialization,
-    } = config;
+    } = params;
 
     this.pool = new Pool({
       host,
@@ -22,8 +22,8 @@ export class PostgreSQLTool extends Tool {
       password,
       database,
       port,
-      max: maxconn,
-      min: minconn,
+      max: maxConn,
+      min: minConn,
     });
 
     if (initialization) {
@@ -71,8 +71,9 @@ export class PostgreSQLTool extends Tool {
       return {
         status: 200,
         content: {
-          affected_rows: res.rowCount,
+          affectedRows: res.rowCount,
           rows: res.rows,
+          success: true
         },
       };
     } catch (error) {
@@ -122,8 +123,8 @@ export class PostgreSQLTool extends Tool {
       password: { type: "string", required: true },
       database: { type: "string", required: true },
       port: { type: "number", required: true },
-      minconn: { type: "number", required: true },
-      maxconn: { type: "number", required: true },
+      minConn: { type: "number", required: true },
+      maxConn: { type: "number", required: true },
       initialization: { type: "string", required: false },
     };
   }
@@ -140,8 +141,17 @@ export class PostgreSQLTool extends Tool {
       type: "object",
       properties: {
         status: { type: "number" },
-        content: { type: "any" },
+        content: {
+          type: "object",
+          properties: {
+            affectedRows: { type: "number" },
+            rows: { type: "array" },
+            success: { type: "boolean" },
+            error: { type: "string" }
+          }
+        },
       },
+      required: ["status", "content"]
     };
   }
 
