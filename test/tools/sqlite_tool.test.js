@@ -1,7 +1,7 @@
 import { describe, expect, test, beforeEach, afterEach } from "bun:test";
 import { Tool } from 'duwende';
 import { SqliteTool } from '../../tools/sqlite_tool.js';
-import { unlink } from 'fs/promises';
+import { unlink, chmod } from 'fs/promises';
 import { existsSync } from 'fs';
 
 describe('SqliteTool', () => {
@@ -355,38 +355,35 @@ describe('SqliteTool', () => {
         test('should handle database file permission errors', async () => {
             const readOnlyPath = 'test/readonly.db';
             
-            // Create database first
+            // Create database first with a table
             sqliteTool = new SqliteTool({ dbPath: readOnlyPath });
             await sqliteTool.initialize();
+            await sqliteTool.use({
+                query: 'CREATE TABLE test (id INTEGER PRIMARY KEY)'
+            });
+            sqliteTool.cleanup();  // Close the connection
             
-            // Make it read-only (this is system-dependent)
-            try {
-                await new Promise((resolve, reject) => {
-                    require('fs').chmod(readOnlyPath, 0o444, (err) => {
-                        if (err) reject(err);
-                        else resolve();
-                    });
-                });
+            // Make it read-only
+            await chmod(readOnlyPath, 0o444);
 
-                // Try to write to read-only database
+            try {
+                // Try to open a new connection with write permissions
+                sqliteTool = new SqliteTool({ dbPath: readOnlyPath });
+                await sqliteTool.initialize();
+
+                // Attempt to write to the read-only database
                 const result = await sqliteTool.use({
-                    query: 'CREATE TABLE test (id INTEGER PRIMARY KEY)'
+                    query: 'INSERT INTO test (id) VALUES (1)'
                 });
 
                 expect(result.status).toBe(400);
                 expect(result.content.success).toBe(false);
                 expect(result.content.error).toBeDefined();
-                expect(result.content.error).toContain('permission');
+                expect(result.content.error).toContain('readonly database');
             } finally {
                 // Cleanup
                 if (existsSync(readOnlyPath)) {
-                    // Need to make it writable again to delete it
-                    await new Promise((resolve, reject) => {
-                        require('fs').chmod(readOnlyPath, 0o666, (err) => {
-                            if (err) reject(err);
-                            else resolve();
-                        });
-                    });
+                    await chmod(readOnlyPath, 0o666);
                     await unlink(readOnlyPath);
                 }
             }
