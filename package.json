@@ -11,6 +11,6 @@
     "duwende": "latest",
     "jsonwebtoken": "^9.0.2",
     "mustache": "^4.2.0",
-    "pg": "^8.13.1"
+    "mysql2": "^3.9.2"
   }
 }
