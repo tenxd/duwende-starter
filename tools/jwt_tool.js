@@ -8,12 +8,12 @@ export class JWTTool extends Tool {
   }
 
   async use(params) {
-    const { action, payload, token, cookies, headers, cookieName } = params;
+    const { action, payload, token, cookies, headers, cookieName, expiresIn } = params;
 
     try {
       switch (action) {
         case 'sign':
-          return this.signToken(payload);
+          return this.signToken(payload, expiresIn);
         case 'verify': {
           // Try Authorization header first
           if (headers?.get('authorization')) {
@@ -26,10 +26,16 @@ export class JWTTool extends Tool {
 
           // Then try cookies
           if (cookies) {
-            const tokenName = cookieName || 'jwt-token';
-            const cookieToken = cookies[tokenName];
-            if (cookieToken) {
-              return this.verifyToken(cookieToken);
+            if (headers?.get('cookie')) {
+              const tokenName = cookieName || 'jwt-token';
+              const cookieStr = headers.get('cookie');
+              const cookies = cookieStr.split(';').map(c => c.trim());
+              const tokenCookie = cookies.find(c => c.startsWith(`${tokenName}=`) || c.startsWith(`${tokenName} =`));
+              if (tokenCookie) {
+                const [name, ...valueParts] = tokenCookie.split('=');
+                const cookieToken = valueParts.join('=').trim();
+                return this.verifyToken(cookieToken);
+              }
             }
           }
 
@@ -56,8 +62,8 @@ export class JWTTool extends Tool {
     }
   }
 
-  signToken(payload) {
-    const token = jwt.sign(payload, this.secretKey, { expiresIn: '1h' });
+  signToken(payload, expiresIn) {
+    const token = jwt.sign(payload || {}, this.secretKey,  {expiresIn});
     return {
       status: 200,
       content: token
