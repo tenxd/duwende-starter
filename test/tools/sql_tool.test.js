@@ -196,6 +196,101 @@ describe("SqlTool", () => {
     });
   });
 
+    describe("Security and Safety Tests", () => {
+    let tool;
+
+    beforeEach(async () => {
+      tool = new SqlTool({
+        type: "sqlite",
+        dbPath: ":memory:",
+        initialization: `
+          DROP TABLE IF EXISTS secure_test;
+          CREATE TABLE secure_test (id INTEGER PRIMARY KEY, content TEXT);
+        `
+      });
+      await tool.initialize();
+    });
+
+    afterEach(() => {
+      if (tool) tool.cleanup();
+    });
+
+    test("should block unsafe SQL patterns in query text", async () => {
+      const result = await tool.use({
+        query: "SELECT * FROM secure_test; DROP TABLE secure_test;"
+      });
+
+      expect(result.status).toBe(400);
+      expect(result.content.success).toBe(false);
+      expect(result.content.error).toContain("Potential SQL injection");
+    });
+
+    test("should allow markdown-like content with -- inside parameter values", async () => {
+      const result = await tool.use({
+        query: "INSERT INTO secure_test (content) VALUES (?)",
+        values: ["Some markdown text -- not SQL"]
+      });
+
+      expect(result.status).toBe(200);
+      expect(result.content.success).toBe(true);
+    });
+
+    test("should allow normal safe queries with semicolons", async () => {
+      const result = await tool.use({
+        query: "SELECT * FROM secure_test;"
+      });
+
+      expect(result.status).toBe(200);
+      expect(result.content.success).toBe(true);
+    });
+
+    test("should reject direct DROP statements", async () => {
+      const result = await tool.use({
+        query: "DROP TABLE secure_test"
+      });
+
+      expect(result.status).toBe(400);
+      expect(result.content.error).toContain("Potential SQL injection");
+    });
+  });
+
+  describe("Resilience Tests", () => {
+    test("should handle failed initialization SQL gracefully", async () => {
+      const badTool = new SqlTool({
+        type: "sqlite",
+        dbPath: ":memory:",
+        initialization: "INVALID SQL HERE"
+      });
+
+      await expect(badTool.initialize()).rejects.toThrow();
+    });
+
+    test("cleanup should be idempotent", async () => {
+      const tool = new SqlTool({ type: "sqlite", dbPath: ":memory:" });
+      await tool.initialize();
+
+      // Call cleanup twice
+      tool.cleanup();
+      expect(() => tool.cleanup()).not.toThrow();
+    });
+
+    test("should auto-initialize on first use if not already initialized", async () => {
+      const tool = new SqlTool({
+        type: "sqlite",
+        dbPath: ":memory:",
+        initialization: "CREATE TABLE IF NOT EXISTS auto_init (id INTEGER PRIMARY KEY)"
+      });
+
+      const result = await tool.use({
+        query: "SELECT 1 as test"
+      });
+
+      expect(result.status).toBe(200);
+      expect(result.content.success).toBe(true);
+    });
+  });
+
+
   describe("Schema Validation", () => {
     test("should have valid init schema", () => {
       const schema = SqlTool.init_schema();
