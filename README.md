@@ -304,7 +304,7 @@ The `config.json` file contains both global and resource-specific settings:
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) v1.1.38 or later
+- [Bun](https://bun.sh) v1.2.21 or later
 
 ### Installation
 
