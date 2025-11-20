@@ -1,4 +1,6 @@
 {
+  "port":1111,
+  "idleTimeout":0,
   "global": {
     "resourcePath": "services/${service}/resources/${name}.js"
   },
@@ -6,5 +8,10 @@
     "user": {
       "defaultGreeting": "Welcome"
     }
+  },
+  "logging": {
+  "enabled": true,
+  "level": "basic",
+  "excludePaths": []
   }
 }
